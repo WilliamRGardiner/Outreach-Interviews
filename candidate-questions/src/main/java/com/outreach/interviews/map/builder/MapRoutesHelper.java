@@ -19,6 +19,7 @@ import com.google.gson.JsonParser;
 import com.outreach.interviews.map.enums.MapModes;
 import com.outreach.interviews.map.enums.MapOperations;
 import com.outreach.interviews.map.enums.MapRegions;
+import com.outreach.interviews.map.resource.Geocode;
 
 public class MapRoutesHelper
 {
@@ -80,9 +81,6 @@ public class MapRoutesHelper
 		 * @return {@link RoutesBuilder}
 		 */
 		public RoutesBuilder setURL(MapOperations type) {
-			if(type.equals(MapOperations.geocode))
-				throw new UnsupportedOperationException();
-
 			this.operation = type;
 			return this;
 
@@ -96,13 +94,15 @@ public class MapRoutesHelper
 		 * @throws IllegalArgumentException
 		 */
 		public RoutesBuilder build() throws UnsupportedOperationException, IOException, IllegalArgumentException {
-			String requestURL = this.getURL()  	+ "&origin=" + getOrigin() 
-												+ "&destination=" + getDestination()
-												+ "&region=" + getRegion()
-												+ "&key=" + this.getAPIKey();
-			
-			if(getMode() != null) {
-				requestURL = requestURL + "&mode=" + this.getMode();
+			String requestURL = this.getURL();
+			if(this.operation == MapOperations.directions) {
+				requestURL += "&origin=" + getOrigin() + "&destination=" + getDestination() + "&region="
+						+ getRegion() + "&key=" + this.getAPIKey();
+				if(getMode() != null) {
+					requestURL = requestURL + "&mode=" + this.getMode();
+				}
+			} else if(this.operation == MapOperations.geocode) {
+				requestURL += "&address=" + getOrigin() + "&key=" + this.getAPIKey();;
 			}
 			
 			HttpGet httpGet = new HttpGet(requestURL);
@@ -138,6 +138,25 @@ public class MapRoutesHelper
 					list.add(step.get("html_instructions").getAsString());
 				}
 				return list;
+			} else {
+				throw new IllegalArgumentException("Does not support " + MapOperations.geocode.name());
+			}
+		}
+		
+		/**
+		 * Retrieves the geocodes for all locations matching the search criteria.
+		 * 
+		 * @return a List of Geocode Objects for all matching locations
+		 */
+		public List<Geocode> getGeocode() {
+			if(this.operation.equals(MapOperations.geocode) && zeroResults(this.result)) {
+				JsonArray resultArray = this.result.get("results").getAsJsonArray();
+				Iterator<JsonElement> resultIterator = resultArray.iterator();
+				List<Geocode> geocodes = new ArrayList<>();
+				while (resultIterator.hasNext()) {
+					geocodes.add(new Geocode(resultIterator.next().getAsJsonObject().get("geometry").getAsJsonObject()));
+				}
+				return geocodes;
 			} else {
 				throw new IllegalArgumentException("Does not support " + MapOperations.geocode.name());
 			}

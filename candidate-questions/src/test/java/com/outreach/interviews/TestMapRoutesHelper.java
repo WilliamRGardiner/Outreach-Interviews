@@ -9,9 +9,9 @@ import java.util.List;
 import org.junit.Test;
 
 import com.outreach.interviews.map.builder.MapRoutesHelper;
-import com.outreach.interviews.map.enums.MapModes;
 import com.outreach.interviews.map.enums.MapOperations;
 import com.outreach.interviews.map.enums.MapRegions;
+import com.outreach.interviews.map.resource.Geocode;
 
 public class TestMapRoutesHelper 
 {	
@@ -40,7 +40,7 @@ public class TestMapRoutesHelper
 		assertTrue(steps.size() > 5);
 	}
 	
-	@Test(expected = java.lang.UnsupportedOperationException.class)
+	@Test(expected = java.lang.IllegalArgumentException.class)
 	public void testMapRoutesHelperApiKey3() throws UnsupportedOperationException, IOException {
 		List<String> steps = new MapRoutesHelper.RoutesBuilder()
 			.setOrigin("Sudbury")
@@ -76,6 +76,18 @@ public class TestMapRoutesHelper
 			.getDirections();
 		
 		assertNotNull(steps);
+	}
+	
+	@Test
+	public void testMapRoutesHelperLocation1() throws UnsupportedOperationException, IllegalArgumentException, IOException {
+		List<Geocode> steps = new MapRoutesHelper.RoutesBuilder()
+				.setOrigin("Ottawa")
+				.setRegion(MapRegions.en)
+				.setURL(MapOperations.geocode)
+				.build()
+				.getGeocode();
+			
+			assertNotNull(steps);
 	}
 	
 }
